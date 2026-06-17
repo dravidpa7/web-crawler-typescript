@@ -96,3 +96,74 @@ export function extractPageData(html : string, pageURL :string): ExtractPageData
       image_urls: getImagesFromHTML(html,pageURL)
    }
 }
+
+export async function getHTML(url:string){
+   console.log(`crawling ${url}`);
+   let response;
+   try {
+      response = await fetch(url,{
+            headers:{
+               'User-Agent':'BootCrawler/1.0'
+            }
+      });
+   }  
+   catch (error) {
+      throw new Error(`Got Network error: ${(error as Error).message}`);
+   }
+   
+   if(!response.ok){
+      console.log(`HTTP error! Status: ${response.status}`);
+      return;
+   }
+
+   const content_type = response.headers.get("content-type");
+
+   if (!content_type || !content_type?.includes("text/html")){
+      console.log("This is not a html") 
+      return;
+   }
+
+   const html = response.text();
+   return html;
+}
+
+export async function crawlPage(
+  baseURL: string,
+  currentURL: string = baseURL,
+  pages: Record<string, number> ={}
+){
+   let html = '';
+   const basePageHost = new URL(baseURL).hostname;
+   const currentPageHost = new URL(currentURL).hostname;
+
+   if (basePageHost !== currentPageHost){
+      return pages;
+   }
+
+   const normalizedCurrentURL = normalizeURL(currentURL);
+
+   if(pages[normalizedCurrentURL]>0){
+      pages[normalizedCurrentURL]++;
+      return pages
+   }
+
+   pages[normalizedCurrentURL] = 1
+
+   console.log(`crawling current url ${normalizedCurrentURL}`);
+
+   try {
+      html = await getHTML(currentURL);
+   } catch (error) {
+      console.log(`${error}`)
+      return pages;
+   }
+
+   const nextURLs = getURLsFromHTML(html,baseURL);
+
+   for(const nextURL of nextURLs){
+      pages = await crawlPage(baseURL, nextURL, pages)
+   }
+
+   return pages;
+}
+
