@@ -1,5 +1,6 @@
-import { crawlPage, getHTML } from "./crawl";
-
+// import { crawlPage, getHTML } from "./crawl";
+import { crawlSiteAsync } from "./crawl";
+import pLimit from 'p-limit';
 
 async function main(){
     const argv_length  = process.argv.length
@@ -17,10 +18,9 @@ async function main(){
 
     const baseURL = process.argv[2]
     console.log("Crawl the given website",baseURL);
-
-    const result = await getHTML(baseURL);
-    const urls = await crawlPage(baseURL)
-    console.log(urls);
+    
+    const pages = await crawlSiteAsync(baseURL,5);
+    console.log(pages)
     
     process.exit(0);
 }
