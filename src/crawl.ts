@@ -150,20 +150,16 @@ class ConcurrentCrawler {
    }     
 
    private addPageVisit(normalizedURL: string) : boolean{
-      const LENGHTH_PAGE = Object.keys(this.pages).length;
-
-      if(this.shouldStop){
-         this.shouldStop = true;
-         console.log("Reached maximum number of pages to crawl.")
-         return false;
-      }
+      const pageCount = Object.keys(this.pages).length;
 
       if (this.pages[normalizedURL] > 0) {
          this.pages[normalizedURL]++;
          return false;
       }
       
-      if(this.maxPages <= LENGHTH_PAGE){
+      if(this.maxPages <= pageCount){
+         this.shouldStop = true;
+         console.log("Reached maximum number of pages to crawl.");
          return false;
       }
       
@@ -211,12 +207,15 @@ class ConcurrentCrawler {
          task.finally(()=>this.allTasks.delete(task))
       });
 
-      // const crawlPromise = nextURLs.map((nextURL)=>this.crawlPage(nextURL))
-      // await Promise.all(crawlPromise);
    }
 
    async crawl() : Promise<Record<string,number>>{
       await this.crawlPage(this.baseURL);
+
+      while(this.allTasks.size > 0){
+         await Promise.all([...this.allTasks])
+      }
+
       return this.pages;
    }
 }
