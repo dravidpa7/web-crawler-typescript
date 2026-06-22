@@ -1,4 +1,5 @@
 import { crawlSiteAsync } from "./crawl";
+import { writeJSONReport } from "./report";
 
 async function main(){
     const argv_length  = process.argv.length
@@ -30,7 +31,12 @@ async function main(){
     }
 
     const pages = await crawlSiteAsync(baseURL,maxConcurrency, maxPages);
-    console.log(pages)
+    
+    console.log("Finished crawling.");
+    // console.log(pages)
+    console.log("Pages count:", Object.keys(pages).length);
+
+    writeJSONReport(pages)
     
     process.exit(0);
 }
